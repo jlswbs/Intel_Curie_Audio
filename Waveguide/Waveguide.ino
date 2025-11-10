@@ -1,4 +1,4 @@
-// Floating point Wavequide synthesis //
+// Floating point Waveguide synthesis //
 
 #include "CurieTimerOne.h"
 
@@ -62,6 +62,7 @@ void sample() {
 enum ExciteType { NOISE, SINE };
 
 void excite(float freq, ExciteType type = NOISE) {
+
     N = (uint16_t)(SAMPLERATE / freq);
     if (N >= SIZE) N = SIZE - 1;
     if (N < 4) N = 4;
@@ -73,15 +74,16 @@ void excite(float freq, ExciteType type = NOISE) {
         float s = 0.0f;
         switch(type) {
             case NOISE:
-                s = (float)random(-32768,32767)/65536.0f;
+                s = (float)random(-32768, 32767) / 65536.0f;
                 break;
             case SINE:
-                s = sinf(2.0f*3.14159265f*i/N);
+                s = sinf(2.0f * 3.14159265f * i / N);
                 break;
         }
         rightWave[i] = s;
         leftWave[i]  = 0.0f;
     }
+
 }
 
 void setup() {
@@ -100,7 +102,7 @@ void loop() {
     float freqTable[] = {110.0f, 146.8f, 196.0f, 246.9f, 329.6f, 392.0f, 440.0f, 523.3f};
     float f = freqTable[random(0, 8)];
 
-    ExciteType type = (ExciteType)random(0,2);
+    ExciteType type = (ExciteType)random(0, 2);
     excite(f, type);
 
     int tempo = 60000 / BPM;
