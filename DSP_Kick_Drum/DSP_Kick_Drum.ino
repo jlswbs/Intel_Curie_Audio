@@ -15,7 +15,7 @@ float randomf(float minf, float maxf) {return minf + random(1UL << 31)*(maxf - m
 class Synth {
 public:
 
-  bool trig = 0;
+  bool trig = false;
   int noise = 0;
   int wave = 0;
   int i = 0;
@@ -35,10 +35,11 @@ public:
 
 int Synth::calculate() {
 
-  if (trig == 1) {
+  if (trig == true) {
     i = 0;
     j = 0;
     k = 1.0f;
+    trig = false;
   }
 
   int freq = 12 * (1.0f - tone);
@@ -90,18 +91,14 @@ void sample(){
 
 void loop(){
 
-  kick.trig = 1;
+  kick.trig = true;
   kick.noise = rand() % 3;
   kick.vol = randomf(0.4f, 0.9f);
   kick.decay = random(8, 32);
   kick.harm = random(0, 31);
   kick.tone = randomf(0.1f, 0.9f);
- 
-  delay(1);
-
-  kick.trig = 0;
 
   int tempo = 60000 / BPM;
-  delay((tempo / 2) - 1);
+  delay(tempo / 2);
 
 }
