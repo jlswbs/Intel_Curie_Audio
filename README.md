@@ -1,1 +1,2 @@
-- https://github.com/vult-dsp/vult
+- DSP = some digital synthesis codes
+- Vult = Vult DSP codes - https://github.com/vult-dsp/vult
