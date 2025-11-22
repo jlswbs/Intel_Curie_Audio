@@ -8,8 +8,6 @@
 
 float randomf(float minf, float maxf) {return minf + random(1UL << 31)*(maxf - minf) / (1UL << 31);}
 
-  float lim = 0.0f;
-
   int time;
   const int oneSecInUsec = 1000000;
 
@@ -22,8 +20,8 @@ public:
   float acc = 0.0f;
 	float pitch = 0.0f;
   float lim = 0.0f;
-  bool gate = 0;
-  bool type = 0;
+  bool trig = false;
+  bool type = false;
   float decay = 0.0f;
   float d = 0.0f;
 
@@ -33,14 +31,17 @@ public:
 
 float Synth::calculate() {
 
-  y[0] = ((A+pitch) * y[1]) - y[2];
+  y[0] = ((A + pitch) * y[1]) - y[2];
 	y[2] = y[1];
 	y[1] = y[0];
 	
-  if (gate == 1){
+  if (trig == true){
 
     d = 1.0f;
+    y[0] = 0;
     y[1] = acc;
+    y[2] = 0;
+    trig = false;
 
   }
 
@@ -88,18 +89,14 @@ void sample(){
 
 void loop(){
 
-  drum.gate = 1;
+  drum.trig = true;
   drum.type = rand()%2;
   drum.acc = randomf(0.5f, 1.0f);
   drum.lim = randomf(0.2f, 0.9f);
   drum.decay = randomf(1.0f, 1.5f) / SAMPLE_RATE * 10;
   drum.pitch = randomf(0.01f, 0.025f);
 
-  delay(1);
-
-  drum.gate = 0;
-
   int tempo = 60000 / BPM;
-  delay((tempo / 3) - 1);
+  delay(tempo / 3);
 
 }
