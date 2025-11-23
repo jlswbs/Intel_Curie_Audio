@@ -1,0 +1,139 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Implements the resonant filter simulation as shown in
+http://en.wikipedia.org/wiki/Phase_distortion_synthesis
+
+*/
+
+fun nsine(x) @[table(size=128,min=0.0,max=1.0)] {
+   return sin(6.283185307179586 * x);
+}
+
+fun edge(x:bool) : bool {
+   mem pre;
+   val ret = x && not(pre);
+   pre = x;
+   return ret;
+}
+
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x <> x;
+    pre_x = x;
+    return v;
+}
+
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+
+fun dcblock(x0){
+  mem x1,y1;
+  val y0 = x0-x1+y1*0.995;
+  x1,y1 = x0,y0;
+  return y0;
+}
+
+fun soft(x1) {
+   mem x2,x3,x4;
+   val o = (x1+x2+x3+x4)/4.0;
+   x2,x3,x4 = x1,x2,x3;
+   return o;
+}
+
+fun pitchToRate_1024(pitch) @[table(size=32,min=0.0,max=127.0)] {
+   return 0.18984168003671556 * exp(0.057762265046662105 * pitch);
+}
+
+fun cvToPitch(cv) {
+   return cv * 120.0 + 24.0;
+}
+
+fun cvToRate_1024(cv) @[table(size=32,min=0.0,max=0.9)] {
+   return pitchToRate_1024(cvToPitch(cv));
+}
+
+fun cvToperiod(cv) @[table(size=32,min=0.0,max=1.0)] {
+   val pitch = cvToPitch(cv);
+   val f = 8.175798915643707 * exp(0.057762265046662105 * pitch);
+   return 44100.0 / f / 2.0;
+}
+
+fun tanh_table(x) @[table(min = -24.0, max = 24.0, size = 241)] {
+  return 16.0 * tanh(x / 16.0);
+}
+
+fun saturate_soft(x) {
+  return tanh_table(x);
+}
+
+fun tanh_table2(x:real) @[table(min = -24.0, max = 24.0, size = 241)]{
+  return tanh(x);
+}
+
+fun saturate(x) {
+   return tanh_table2(x);
+}
+
+fun delayx(x:real, cv:real) : real {
+   mem buffer : array(real, 675);
+   mem write_pos = (write_pos+1) % size(buffer);
+   _ = set(buffer, write_pos, x);
+   // Gets the position in the buffer to read
+   val r_size = real(size(buffer));
+   val r_index  = (real(write_pos) - cvToperiod(cv)) % r_size;
+   r_index = if r_index < 0.0 then r_size + r_index else r_index;
+   val t1 = int(floor(r_index)) % size(buffer);
+   val t2 = (t1 + 1) % size(buffer);
+   // Gets the decimal part of the position
+   val decimal  = r_index - real(t1);
+   // Reads the values in the buffer
+   val x1 = get(buffer,t1);
+   val x2 = get(buffer,t2);
+   // Interpolates the value
+   val ret = (x2-x1) * decimal + x1;
+   return ret;
+}
+
+fun toneCurve(tone) @[table(min=-1.2,max=1.2,size=64)] {
+   val sign = if tone < 0.0 then -1.0 else 1.0;
+   return sign * sqrt(abs(tone));
+}
+
+fun phase(cv:real, reset:real) : real {
+   mem rate;
+   if(change(cv))
+   {
+      rate = cvToRate_1024(cv);
+   }
+   mem phase = if edge(reset > 0.5) then 0.0 else phase + rate;
+   phase = if phase > 1024.0 then phase - 1024.0 else phase;
+   return phase / 1024.0;
+}
+
+fun comb(in, cv, tone, res) {
+   mem output, stone;
+   if(change(tone)){
+      stone = toneCurve(tone);
+   }
+   val feedback = dcblock(output * res);
+   val saturated_input = saturate_soft(in + feedback);
+   output = stone * delayx(saturated_input, soft(cv)) + in;
+   return output;
+}
+
+fun process(cv, detune, tone, res) {
+   mem pre_phase1;
+   val phase1 = phase(cv, 0.0);
+   val comp   = 1.0 - phase1;
+   val reset  = pre_phase1 - phase1;
+   pre_phase1 = phase1;
+   val phase2 = phase(cv + smooth(detune / 2.0), reset);
+   val sine  = nsine(phase2);
+   return saturate(sine * comb(comp, cv, tone, res));
+}
