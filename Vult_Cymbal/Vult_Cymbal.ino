@@ -1,4 +1,4 @@
-// Vult DSP float - Cymbal oscillator + reverb //
+// Vult DSP float - Cymbal oscillator //
 
 #include "CurieTimerOne.h"
 #include "Cymbal.h"
@@ -9,21 +9,22 @@ Cymbal_process_type cymbal;
 #define SAMPLE_RATE 44100
 #define BPM         120
 
-const int FIXED_BITS = 14;
-const int FIXED_SCALE = (1 << FIXED_BITS);
-const int REVERB_SIZE = 0x500;
-const int REVERB_LENGTH = (int)(REVERB_SIZE * 0.9f);
-const int REVERB_DECAY = (int)(FIXED_SCALE * 0.7f);
-
-int16_t reverbAddr;
-int reverbBuffer[REVERB_SIZE];
-
 float randomf(float minf, float maxf) {return minf + random(1UL << 31)*(maxf - minf) / (1UL << 31);} 
 
   int time;
   const int oneSecInUsec = 1000000;
   
   float gate, decay, pitch;
+
+void sample(){
+
+  int16_t output = 24576.0f * Cymbal_process(cymbal, gate, decay, pitch);
+
+  analogWrite(AUDIO, 32768 + output);
+    
+  CurieTimerOne.restart(time);
+  
+}
 
 void setup(){
 
@@ -38,25 +39,6 @@ void setup(){
   Cymbal_process_init(cymbal);
  
 }
-
-
-void sample(){
-
-  int16_t sample = 24576.0f * Cymbal_process(cymbal, gate, decay, pitch);
-
-  int reverb = ((int)reverbBuffer[reverbAddr] * REVERB_DECAY) >> FIXED_BITS;
-  reverb += sample;
-  reverbBuffer[reverbAddr] = reverb;
-  reverbAddr++;
-  if (reverbAddr > REVERB_LENGTH) reverbAddr = 0;
-  int16_t output = sample + (reverbBuffer[reverbAddr]>>3);
-
-  analogWrite(AUDIO, 32768 + output);
-    
-  CurieTimerOne.restart(time);
-  
-}
-
 
 void loop(){
 
