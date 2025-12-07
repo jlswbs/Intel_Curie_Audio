@@ -1,4 +1,4 @@
-// Sine wave fuzzy logic shaper //
+// FM fuzzy logic shaper //
 
 #include "CurieTimerOne.h"
 
@@ -12,9 +12,14 @@ const int oneSecInUsec = 1000000;
 
 float sineTable[TABLE_SIZE];
 
-float phase = 0.0f;
-float phaseInc = 0.0f;
-float freq = 440.0f;
+float phaseC = 0.0f;
+float phaseIncC = 0.0f;
+float freqC = 440.0f;
+
+float phaseM = 0.0f;
+float phaseIncM = 0.0f;
+float freqM = 220.0f;
+float fmIndex = 5.0f;
 
 float SIGMA = 0.5f;
 float RULE_OFFSET = 0.3f;
@@ -59,16 +64,21 @@ inline float fuzzyShape(float x) {
 
 void sample() {
 
-  int idx = (int)phase & (TABLE_SIZE - 1);
-  float val = sineTable[idx];
+  int idxM = (int)phaseM & (TABLE_SIZE - 1);
+  float modVal = sineTable[idxM];
+  phaseM += phaseIncM;
+  if (phaseM >= TABLE_SIZE) phaseM -= TABLE_SIZE;
+
+  phaseC += phaseIncC + (fmIndex * phaseIncM * modVal);
+  if (phaseC >= TABLE_SIZE) phaseC -= TABLE_SIZE;
+
+  int idxC = (int)phaseC & (TABLE_SIZE - 1);
+  float val = sineTable[idxC];
   float shaped = fuzzyShape(val);
 
   uint16_t out = (uint16_t)((1.0f + shaped) * 32767.0f);
 
   analogWrite(AUDIO, out);
-
-  phase += phaseInc;
-  if (phase >= TABLE_SIZE) phase -= TABLE_SIZE;
 
   CurieTimerOne.restart(time);
 
@@ -90,8 +100,11 @@ void setup() {
 
 void loop() {
 
-  freq = random(100, 1000);
-  phaseInc = (freq * TABLE_SIZE) / SAMPLE_RATE;
+  freqC = random(220, 4400);
+  phaseIncC = (freqC * TABLE_SIZE) / SAMPLE_RATE;
+
+  freqM = random(50, 440);
+  phaseIncM = (freqM * TABLE_SIZE) / SAMPLE_RATE;
 
   int tempo = 60000 / BPM;
   delay(tempo / 4);
