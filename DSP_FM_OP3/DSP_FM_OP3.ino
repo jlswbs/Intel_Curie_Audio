@@ -1,4 +1,4 @@
-// Simple 3 operator FM synth //
+// 3 operator FM synth //
 
 #include "CurieTimerOne.h"
 
@@ -12,17 +12,24 @@ const int oneSecInUsec = 1000000;
 
 float sineTable[TABLE_SIZE];
 
-float phaseC = 0.0f, phaseIncC = 0.0f, freqC = 440.0f;
-float envC = 1.0f, decayC = 0.9999f;
+float envC = 1.0f, phaseC = 0.0f, phaseIncC = 0.0f, freqC = 440.0f;
+float decayC = 0.9997f;
 
-float phaseM1 = 0.0f, phaseIncM1 = 0.0f, freqM1 = 220.0f;
+float envM1 = 1.0f, phaseM1 = 0.0f, phaseIncM1 = 0.0f, freqM1 = 220.0f;
 float fmIndex1 = 3.0f;
-float envM1 = 1.0f, decayM1 = 0.997f;
+float decayM1 = 0.997f;
 
-float phaseM2 = 0.0f, phaseIncM2 = 0.0f, freqM2 = 110.0f;
-float fmIndex2 = 1.0f;
-float envM2 = 1.0f, decayM2 = 0.9999f;
+float envM2 = 1.0f, phaseM2 = 0.0f, phaseIncM2 = 0.0f, freqM2 = 110.0f;
+float fmIndex2 = 1.5f;
+float decayM2 = 0.9999f;
 
+void triggerEnvelopes() {
+
+  envC = 1.0f;
+  envM1 = 1.0f;
+  envM2 = 1.0f;
+
+}
 
 void sample() {
 
@@ -67,17 +74,16 @@ void setup() {
 
 void loop() {
 
+  triggerEnvelopes();
+
   freqC  = random(220, 1600);
   phaseIncC = (freqC * TABLE_SIZE) / SAMPLE_RATE;
-  envC = 1.0f;
 
   freqM1 = random(100, 880);
   phaseIncM1 = (freqM1 * TABLE_SIZE) / SAMPLE_RATE;
-  envM1 = 1.0f;
 
   freqM2 = random(50, 440);
   phaseIncM2 = (freqM2 * TABLE_SIZE) / SAMPLE_RATE;
-  envM2 = 1.0f;
 
   int tempo = 60000 / BPM;
   delay(tempo / 4);
