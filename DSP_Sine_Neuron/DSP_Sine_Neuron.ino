@@ -35,7 +35,7 @@ void sample() {
   float val = sineTable[idx];
   float shaped = neuronShape(val);
 
-  uint16_t out = (uint16_t)((shaped * 0.5f + 0.5f) * 65535.0f);
+  uint16_t out = (uint16_t)((1.0f + shaped) * 32767.0f);
   analogWrite(AUDIO, out);
 
   phase += phaseInc;
