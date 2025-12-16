@@ -6,3 +6,4 @@
 - VCO = some analog like simulations
 - Spice = euler analog simulation like spice models
 - Osc = some basic digital oscillators
+- PME = audio experiment with pattern matching engine
