@@ -7,3 +7,4 @@
 - Spice = euler analog simulation like spice models
 - Osc = some basic digital oscillators
 - PME = audio experiments with pattern matching engine
+- FFT = FFT/IFFT synthesis and resynthesis experiments
