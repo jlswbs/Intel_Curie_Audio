@@ -63,8 +63,6 @@ void setup() {
 
 void loop() {
 
-  net.forget();
-
   idx = 0;
 
   neuron = random(1, 5);
